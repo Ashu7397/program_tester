@@ -1,5 +1,4 @@
 from pexpect import spawn, TIMEOUT, EOF
-from time import sleep
 import os
 import glob
 
@@ -18,6 +17,7 @@ class Program:
     def compile(self):
         files = [file for file in glob.glob("*.[ch]")]
         output = self._execute([COMPILER, CFLAGS, *files, "-o", self.program])
+        # print("Output of Compile:", output)
         if "error" in output:
             raise RuntimeError("Failed to compile")
         if "warning" in output:
@@ -29,14 +29,15 @@ class Program:
         output = ""
 
         if inputs is not None:
-            for prompt, value in inputs:
-                output += prompt
-                try:
-                    p.expect(prompt, timeout=1)
-                except TIMEOUT:
-                    raise RuntimeError(output)
-                output += p.before.decode("utf-8").replace('\r', '')
-                p.sendline(value)
+            for input in inputs:
+                for prompt, value in [input]:
+                    output += prompt
+                    try:
+                        p.expect(prompt, timeout=1)
+                    except TIMEOUT:
+                        raise RuntimeError(output)
+                    output += p.before.decode("utf-8").replace('\r', '')
+                    p.sendline(value)
 
         p.expect(EOF)
         output += p.before.decode("utf-8").replace('\r', '')

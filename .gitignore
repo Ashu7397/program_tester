@@ -2,3 +2,4 @@
 src_files/*
 result.csv
 .vscode/**
+.idea/
