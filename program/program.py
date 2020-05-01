@@ -6,6 +6,7 @@ import glob
 COMPILER = "gcc"
 CFLAGS = "-Wall"
 
+TEMPLATE_WARNING = "[-Wformat-security]\n     printf(is_stripped ? result_string : default_str);"
 
 class Program:
     def __init__(self, src_dir):
@@ -21,7 +22,8 @@ class Program:
         if "error" in output:
             raise RuntimeError("Failed to compile")
         if "warning" in output:
-            raise RuntimeWarning("Warning")
+            if TEMPLATE_WARNING not in output:
+                raise RuntimeWarning("Warning")
 
     def _execute(self, args, inputs=None):
         self.log_file.write("Running `{}`\n".format(args))
