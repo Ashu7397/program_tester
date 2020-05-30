@@ -6,7 +6,7 @@ import glob
 COMPILER = "gcc"
 CFLAGS = "-Wall"
 
-TEMPLATE_WARNING = "[-Wformat-security]\n     printf(is_stripped ? result_string : default_str);"
+TEMPLATE_WARNING = 'printf(is_stripped ? result_string : "Cannot find the pattern in the string'
 
 class Program:
     def __init__(self, src_dir):
@@ -19,6 +19,7 @@ class Program:
         files = [file for file in glob.glob("*.[ch]")]
         output = self._execute([COMPILER, CFLAGS, *files, "-o", self.program])
         # print("Output of Compile:", output)
+        self.log_file.write("Failed To Compile With error: {}\n".format(output))
         if "error" in output:
             raise RuntimeError("Failed to compile")
         if "warning" in output:
@@ -36,13 +37,19 @@ class Program:
                     output += prompt
                     try:
                         p.expect(prompt, timeout=1)
-                    except TIMEOUT:
+                    except (TIMEOUT, EOF):
                         raise RuntimeError(output)
                     output += p.before.decode("utf-8").replace('\r', '')
                     p.sendline(value)
 
-        p.expect(EOF)
-        output += p.before.decode("utf-8").replace('\r', '')
+        try:
+            p.expect(EOF)
+        except TIMEOUT:
+            raise RuntimeError(output)
+        try:
+            output += p.before.decode("utf-8").replace('\r', '')
+        except UnicodeDecodeError:
+            print("Cannot decode the text.. Possibly non English chars", end="")
         return output
 
     def run(self, args, inputs):
